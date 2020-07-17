@@ -102,14 +102,15 @@ class TCPWriteAPI(Resource):
         data = query['data']
         start_address = query['start_address']
 
-        for vol in data.split(' '):
+        for vol in data:
+            print(data)
             builder.add_32bit_float(vol)
-        data = builder.to_registers()
+        parsed = builder.to_registers()
 
         if query['type_prefix'] == ModbusTypePrefix.COIL.value:
-            client.write_coils(start_address, data)
+            client.write_coils(start_address, parsed)
         elif query['type_prefix'] == ModbusTypePrefix.HOLDING_REGISTER.value:
-            client.write_registers(start_address, data)
+            client.write_registers(start_address, parsed)
 
         client.close()
 
