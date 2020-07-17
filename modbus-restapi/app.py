@@ -56,7 +56,7 @@ class TCPReadAPI(Resource):
 
         result = []
         
-        print data.__dict__
+        print(data.__dict__)
         for i, v in enumerate(data.bits):
             result.append({'address': i+start_address, 'value': v})
 
