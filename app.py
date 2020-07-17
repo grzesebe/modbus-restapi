@@ -104,7 +104,7 @@ class TCPWriteAPI(Resource):
 
         for vol in data:
             builder.add_32bit_float(vol)
-        payload = builder.to_registers()
+        data = builder.to_registers()
 
         if query['type_prefix'] == ModbusTypePrefix.COIL.value:
             client.write_coils(start_address, data)
