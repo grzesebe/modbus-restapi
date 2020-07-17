@@ -106,7 +106,7 @@ class TCPWriteAPI(Resource):
             print(data)
             builder.add_32bit_float(vol)
         parsed = builder.to_registers()
-
+        print(parsed)
         if query['type_prefix'] == ModbusTypePrefix.COIL.value:
             client.write_coils(start_address, parsed)
         elif query['type_prefix'] == ModbusTypePrefix.HOLDING_REGISTER.value:
