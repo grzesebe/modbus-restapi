@@ -55,7 +55,13 @@ class TCPReadAPI(Resource):
         client.close()
 
         result = []
-        for i, v in enumerate(data.bits):
+        
+        
+        if hasattr(data, 'bits'):
+            d = data.bits
+        else:
+            d = data.registers
+        for i, v in enumerate(d):
             result.append({'address': i+start_address, 'value': v})
 
         reg_fields = {'address': fields.Integer, 'value': fields.Integer}
