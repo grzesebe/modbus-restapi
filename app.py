@@ -3,7 +3,10 @@ import enum
 from flask import Flask
 from flask_restful import Api, Resource, reqparse, marshal, fields
 from pymodbus.client.sync import ModbusTcpClient as ModbusClient
-
+from pymodbus.payload import BinaryPayloadBuilder
+from pymodbus.payload import BinaryPayloadDecoder
+from pymodbus.constants import Endian
+builder = BinaryPayloadBuilder(byteorder=Endian.Big, wordorder=Endian.Big)
 
 class ModbusTypePrefix(enum.Enum):
     """Modbus types and their address prefixes."""
@@ -98,6 +101,11 @@ class TCPWriteAPI(Resource):
 
         data = query['data']
         start_address = query['start_address']
+
+        for vol in data:
+            builder.add_32bit_float(vol)
+        payload = builder.to_registers()
+
         if query['type_prefix'] == ModbusTypePrefix.COIL.value:
             client.write_coils(start_address, data)
         elif query['type_prefix'] == ModbusTypePrefix.HOLDING_REGISTER.value:
