@@ -102,7 +102,7 @@ class TCPWriteAPI(Resource):
         data = query['data']
         start_address = query['start_address']
 
-        for vol in data:
+        for vol in data.split(' '):
             builder.add_32bit_float(vol)
         data = builder.to_registers()
 
