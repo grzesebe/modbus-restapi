@@ -59,25 +59,34 @@ class TCPReadAPI(Resource):
 
         result = []
         
+        print (data.registers)
+        # if hasattr(data, 'bits'):
+        #     d = data.bits
+        # else:
+        #     d = data.registers
+
+        decoder = BinaryPayloadDecoder.fromRegisters(data.registers, byteorder=Endian.Big, wordorder=Endian.Big)
+        # decoder.reset()
+        # decoded = {
+        #     'string': decoder.decode_string(8),
+        #     'float': decoder.decode_32bit_float(),
+        #     '16uint': decoder.decode_16bit_uint(),
+        #     'ignored': decoder.skip_bytes(2),
+        #     '8int': decoder.decode_8bit_int(),
+        #     'bits': decoder.decode_bits(),
+        # }
+        e = decoder.decode_16bit_int()
+        i = 0
+        while e is not False:
+            try:
+                print e
+                result.append({'address': i+start_address, 'value': e})
+                i+=1
+                e = decoder.decode_16bit_int()
+            except:
+                e = False
+
         
-        if hasattr(data, 'bits'):
-            d = data.bits
-        else:
-            d = data.registers
-
-        decoder = BinaryPayloadDecoder.fromRegisters(result.registers, endian=Endian.Big)
-        decoder.reset()
-        decoded = {
-            'string': decoder.decode_string(8),
-            'float': decoder.decode_32bit_float(),
-            '16uint': decoder.decode_16bit_uint(),
-            'ignored': decoder.skip_bytes(2),
-            '8int': decoder.decode_8bit_int(),
-            'bits': decoder.decode_bits(),
-        }
-
-        for name, value in iteritems(decoded):
-            result.append({'address': name, 'value': value})
 
 
         # for i, v in enumerate(d):
@@ -120,9 +129,9 @@ class TCPWriteAPI(Resource):
         builder.reset()
         for vol in data:
             print(vol)
-            builder.add_32bit_float(vol)
+            builder.add_32bit_int(vol)
         parsed = builder.build()
-        # parsed = parsed[0::2]
+        parsed = parsed[1::2]
         print(parsed)
         if query['type_prefix'] == ModbusTypePrefix.COIL.value:
             client.write_coils(start_address, parsed, skip_encode=True, unit=1)
