@@ -47,13 +47,13 @@ class TCPReadAPI(Resource):
         start_address = query['start_address']
         count = query['count']
         if query['type_prefix'] == ModbusTypePrefix.DISCRETE_INPUT.value:
-            data = client.read_discrete_inputs(start_address, count)
+            data = client.read_discrete_inputs(start_address, count, unit=1)
         elif query['type_prefix'] == ModbusTypePrefix.COIL.value:
-            data = client.read_coils(start_address, count)
+            data = client.read_coils(start_address, count, unit=1)
         elif query['type_prefix'] == ModbusTypePrefix.INPUT_REGISTER.value:
-            data = client.read_input_registers(start_address, count)
+            data = client.read_input_registers(start_address, count, unit=1)
         elif query['type_prefix'] == ModbusTypePrefix.HOLDING_REGISTER.value:
-            data = client.read_holding_registers(start_address, count)
+            data = client.read_holding_registers(start_address, count, unit=1)
 
         client.close()
 
@@ -64,8 +64,24 @@ class TCPReadAPI(Resource):
             d = data.bits
         else:
             d = data.registers
-        for i, v in enumerate(d):
-            result.append({'address': i+start_address, 'value': v})
+
+        decoder = BinaryPayloadDecoder.fromRegisters(result.registers, endian=Endian.Big)
+        decoder.reset()
+        decoded = {
+            'string': decoder.decode_string(8),
+            'float': decoder.decode_32bit_float(),
+            '16uint': decoder.decode_16bit_uint(),
+            'ignored': decoder.skip_bytes(2),
+            '8int': decoder.decode_8bit_int(),
+            'bits': decoder.decode_bits(),
+        }
+
+        for name, value in iteritems(decoded):
+            result.append({'address': name, 'value': value})
+
+
+        # for i, v in enumerate(d):
+        #     result.append({'address': i+start_address, 'value': v})
 
         reg_fields = {'address': fields.Integer, 'value': fields.Integer}
         return {'registers': [marshal(reg, reg_fields) for reg in result]}
@@ -101,16 +117,17 @@ class TCPWriteAPI(Resource):
 
         data = query['data']
         start_address = query['start_address']
-
+        builder.reset()
         for vol in data:
-            print(data)
+            print(vol)
             builder.add_32bit_float(vol)
-        parsed = builder.to_registers()
+        parsed = builder.build()
+        # parsed = parsed[0::2]
         print(parsed)
         if query['type_prefix'] == ModbusTypePrefix.COIL.value:
-            client.write_coils(start_address, parsed)
+            client.write_coils(start_address, parsed, skip_encode=True, unit=1)
         elif query['type_prefix'] == ModbusTypePrefix.HOLDING_REGISTER.value:
-            client.write_registers(start_address, parsed)
+            client.write_registers(start_address, parsed, skip_encode=True, unit=1)
 
         client.close()
 
